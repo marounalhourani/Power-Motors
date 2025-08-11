@@ -1,0 +1,30 @@
+<template>
+    <template if:true={product}>
+        <div class="product-card">
+            <header class="product-header">
+                <h2 class="product-name">{product.name}</h2>
+            </header>
+
+            <div class="product-details">
+                <p><strong>Country of Origin:</strong> {product.country}</p>
+                <p><strong>Price:</strong> ${product.price}</p>
+                <p><strong>Record Type:</strong> {product.recordType}</p>
+            </div>
+
+            <div class="product-image">
+                <template if:true={product.fullUrl}>
+                    <img src={product.fullUrl} alt="Product Image" class="responsive-image" />
+                </template>
+                <template if:false={product.fullUrl}>
+                    <p class="no-image"><em>No image available.</em></p>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <template if:true={error}>
+        <div class="error-message">
+            <p>Error loading product: {error.message}</p>
+        </div>
+    </template>
+</template>
