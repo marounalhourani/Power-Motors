@@ -33,7 +33,7 @@ public with sharing class Quote_Email_Trigger_Handler  extends TriggerHandler im
     }
     
     public override void afterUpdate() {
-        // Send_Emails_From_Quote.Send_Emails_From_Quote(oldMap, TriggerNew);
+        Send_Emails_From_Quote.Send_Emails_From_Quote(oldMap, TriggerNew);
 
 
     }

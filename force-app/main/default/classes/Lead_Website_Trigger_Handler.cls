@@ -1,7 +1,5 @@
 /**
  * @description Trigger Handler for the Lead Object, Used for :Website field enrichment, auto populate fields
- * only on after insert and after update Because of Asynchronous calloud only works for After Operations
- * After Insert, (null, Trigger new) because oldMap doesnt exist in After Operations
 	 * @Author: Maroun Al Hourani
              * @Company: EI-Technologies
 	 * @<11/8/2025>

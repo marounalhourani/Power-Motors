@@ -1,3 +1,11 @@
+/**
+     * @description Queue Job to be Able to Call asynchronous callout
+	 * @Author: maroun al hourani
+             * @Company: EI-Technologies
+	 * @<11/8/2025>        <Maroun Al Hourani>
+     */ 
+
+
 public with sharing class LeadEnrichQueueable implements Queueable, Database.AllowsCallouts{
     private Set<Id> leadIds;
 
@@ -46,7 +54,6 @@ public with sharing class LeadEnrichQueueable implements Queueable, Database.All
                 update leads;
             } catch (DmlException e) {
                 System.debug('Lead enrichment update failed: ' + e.getMessage());
-                // Optionally implement partial success handling/logging
             }
         }
     }
