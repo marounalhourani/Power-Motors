@@ -58,8 +58,9 @@ public with sharing class ExternalLeadEnrichmentService {
      * Params string website 
      */
     private static String getAccountQueryEndpoint(String website) {
+        String x = (website != null && website != '') ? String.escapeSingleQuotes(website) : '';
         String baseUrl = 'https://neo-discom2-dev-ed.my.salesforce.com/services/data/v54.0/query/?q=';
-        String soql = 'SELECT logoUrl__c, NumberOfEmployees, Foundation_date__c, BillingAddress, ShippingAddress, Description FROM Account WHERE Website = \'' + String.escapeSingleQuotes(website) + '\'';
+        String soql = 'SELECT logoUrl__c, NumberOfEmployees, Foundation_date__c, BillingAddress, ShippingAddress, Description FROM Account WHERE Website = \'' +  x + '\'';
         String encodedQuery = EncodingUtil.urlEncode(soql, 'UTF-8');
         String fullEndpoint = baseUrl + encodedQuery;
         
@@ -91,14 +92,15 @@ public with sharing class ExternalLeadEnrichmentService {
             LeadWrapper responseBodyWrapper = LeadWrapper.parse(responseBody);
             for(LeadWrapper.Records record: responseBodyWrapper.records){
                 websiteInfo.employees = record.NumberOfEmployees;
+                System.debug('number of employees : ' + record.NumberOfEmployees);
                 websiteInfo.description = record.Description;
                 websiteInfo.logoUrl = record.logoUrl;
                 websiteInfo.foundationDate = record.Foundation_date;
-                websiteInfo.city = record.BillingAddress.city;
-                websiteInfo.country = record.BillingAddress.country;
-                websiteInfo.postalCode = record.BillingAddress.postalCode;
-                websiteInfo.street = record.BillingAddress.street;
-                websiteInfo.state= record.BillingAddress.state; 
+                websiteInfo.city = record.BillingAddress?.city;
+                websiteInfo.country = record.BillingAddress?.country;
+                websiteInfo.postalCode = record.BillingAddress?.postalCode;
+                websiteInfo.street = record.BillingAddress?.street;
+                websiteInfo.state= record.BillingAddress?.state; 
                 System.debug('fnd date: ' +  record.Foundation_date);
                 System.debug('logo url: ' +  record.logoUrl);  
                 System.debug('n of emp' + record.NumberOfEmployees);
@@ -107,6 +109,7 @@ public with sharing class ExternalLeadEnrichmentService {
             
         }
         System.Debug('website information: ' + websiteInfo);
+
         return websiteInfo;
     }
 }

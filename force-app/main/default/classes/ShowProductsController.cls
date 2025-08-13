@@ -5,7 +5,7 @@ public with sharing class ShowProductsController {
         
         Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name = 'Person Account Price Book' LIMIT 1];
         
-        List<Product2> products = [SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, IsActive From Product2 
+        List<Product2> products = [SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, Description,Serial_Number__c, IsActive From Product2 
         WHERE IsActive = True];
         
         //get pricebook entries for b2c pricebook
@@ -18,7 +18,7 @@ public with sharing class ShowProductsController {
         List<ProductWrapper> result = new List<ProductWrapper>();
         for(Product2 p: products){
             Decimal price = productIdToEntry.containsKey(p.Id) ? productIdToEntry.get(p.Id).UnitPrice : null;
-            result.add(new ProductWrapper(p.Id, p.Name, p.Country_Of_Origin__c, p.recordTypeName__c, price));
+            result.add(new ProductWrapper(p.Id, p.Name, p.Country_Of_Origin__c, p.recordTypeName__c, price, p.Description, p.Serial_Number__c));
         }
         
         return result;
@@ -31,21 +31,40 @@ public with sharing class ShowProductsController {
     public class ProductWrapper {
         @AuraEnabled public Id productId;
         @AuraEnabled public String name;
+        @AuraEnabled public String serialNumber;
         @AuraEnabled public String country;
         @AuraEnabled public String recordType;
         @AuraEnabled public Decimal price;
         @AuraEnabled public String fullUrl;
+        @AuraEnabled public String description;
         
         
-        public ProductWrapper(Id productId, String name, String country, String recordType, Decimal price) {
+        
+        // 7 arguments constructor
+        public ProductWrapper(Id productId, String name, String country, String recordType, Decimal price, String description, String serialNumber) {
             this.productId = productId;
             this.name = name;
             this.country = country;
             this.recordType = recordType;
             this.price = price;
             this.fullUrl = null;
-            
+            this.description = description;
+            this.serialNumber = serialNumber;
         }
+
+        // 8 arguments constructor       
+        public ProductWrapper(Id productId, String name, String country, String recordType, Decimal price, String description, String serialNumber, String fullUrl) {
+            this.productId = productId;
+            this.name = name;
+            this.country = country;
+            this.recordType = recordType;
+            this.price = price;
+            this.fullUrl = null;
+            this.description = description;
+            this.serialNumber = serialNumber;
+            this.fullUrl = fullUrl;
+        }
+        
         
         // 6-argument constructor (optional image)
         public ProductWrapper(Id productId, String name, String country, String recordType, Decimal price, String fullUrl) {
@@ -55,6 +74,8 @@ public with sharing class ShowProductsController {
             this.recordType = recordType;
             this.price = price;
             this.fullUrl = fullUrl;
+            this.description = description;
+            this.serialNumber = serialNumber;
         }
         
         
@@ -66,7 +87,7 @@ public with sharing class ShowProductsController {
         ContentVersion cv;
         String ordDomain = Label.org_domain;
         String fullUrl;
-        Product2 p = [SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, IsActive From Product2 WHERE Id = :productId LIMIT 1];
+        Product2 p = [SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, IsActive, Description, Serial_Number__c From Product2 WHERE Id = :productId LIMIT 1];
         Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name = 'Person Account Price Book' LIMIT 1];
         PriceBookEntry pbe =  [SELECT Product2Id, UnitPrice FROM PriceBookEntry WHERE Product2Id = :p.Id AND Pricebook2Id = :B2Cpb.Id AND IsActive = True LIMIT 1];
         try {    
@@ -78,8 +99,9 @@ public with sharing class ShowProductsController {
             
             fullUrl = null;
         }
-        
-        ProductWrapper wrapper = new ProductWrapper(p.id, p.name, p.Country_Of_Origin__c, p.recordTypeName__c, pbe.UnitPrice, fullUrl);
+           
+  
+        ProductWrapper wrapper = new ProductWrapper(p.id, p.name, p.Country_Of_Origin__c, p.recordTypeName__c, pbe.UnitPrice,  p.Description,p.Serial_Number__c, fullUrl );
         System.debug('product Id: '+ wrapper.productId);
         System.debug('product name: '+ wrapper.name);
         System.debug('product country: '+ wrapper.country);
@@ -92,19 +114,22 @@ public with sharing class ShowProductsController {
         
     }
     
-    @AuraEnabled()
-    public static void createOpportunity(List<Id> productIds, Id accountId, String opportunityName){
+    @AuraEnabled
+    public static Id createOpportunity(List<Id> productIds, Id accountId, String opportunityName){
         Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name = 'Person Account Price Book' LIMIT 1];
+        Id oppId;
         if (productIds.size() > 0) {
             Opportunity opp = new Opportunity(
             Name = opportunityName,
             AccountId = accountId,
             StageName = 'Qualification',
-            Pricebook2Id = B2Cpb.Id, 
+            // Pricebook2Id = B2Cpb.Id, 
             CloseDate = Date.today()
             );
             
             insert opp;
+            oppId = opp.Id;
+            
             Map<Id, PricebookEntry> productIdToPbe = new Map<Id, PricebookEntry>();
             for (PricebookEntry pbe : [
             SELECT Id, Product2Id, UnitPrice 
@@ -135,9 +160,11 @@ public with sharing class ShowProductsController {
             }
             if (!oppLineItems.isEmpty()) {
                 insert oppLineItems;
+                
             }
             
-            
         }
+        return oppId;
+        
     }
 }

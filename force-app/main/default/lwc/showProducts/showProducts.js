@@ -7,15 +7,16 @@ import COUNTRY_FIELD from '@salesforce/schema/Product2.Country_Of_Origin__c';
 import { fireEvent } from 'c/pubsub';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import createOpportunity from '@salesforce/apex/ShowProductsController.createOpportunity';
+import { NavigationMixin } from 'lightning/navigation';
 
-export default class ShowProducts extends LightningElement {
+export default class ShowProducts extends NavigationMixin(LightningElement) {
     @api recordId;
     @track products;
     error;
     @track selectedRowIds = [];      // array passed to datatable (visible selected ids)
-
-      // Keep a Set to remember all selected IDs across filters
-  globalSelectedIds = new Set();
+    
+    // Keep a Set to remember all selected IDs across filters
+    globalSelectedIds = new Set();
     
     @wire(getAvailabledProducts)
     wiredProducts({ error, data }){
@@ -37,8 +38,8 @@ export default class ShowProducts extends LightningElement {
     
     recortTypeOptions = [{ label: 'All', value: 'All' }, { label: 'Generator', value: 'Generator' }, { label: 'Part', value: 'Part' }];
     countryOptions = [];
-
-     @wire(getObjectInfo, { objectApiName: PRODUCT_OBJECT })
+    
+    @wire(getObjectInfo, { objectApiName: PRODUCT_OBJECT })
     objectInfo;
     
     @wire(getPicklistValues, {
@@ -69,11 +70,11 @@ export default class ShowProducts extends LightningElement {
         } else if (name === 'type') {
             this.selectedType = value;
         }
-  // Filter first
-    this.filterProducts();
+        // Filter first
+        this.filterProducts();
         // Recompute the visible selected IDs from the global Set
-    const visibleIds = this.filteredProducts.map(r => r.productId);
-    this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id => visibleIds.includes(id));
+        const visibleIds = this.filteredProducts.map(r => r.productId);
+        this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id => visibleIds.includes(id));
         
         // this.filterProducts();
         console.log('selected product country:' , this.selectedCountry );
@@ -97,11 +98,11 @@ export default class ShowProducts extends LightningElement {
         console.log('Opportunity Name:', this.opportunityName);
     }
     
-        columns = [{ label: 'Name', fieldName: 'name' , type :'button' , typeAttributes: {label: { fieldName: 'name' },name: 'select_product',variant: 'base'}},
-                   { label: 'Country of Origin', fieldName: 'country' },
-                   { label: 'Type', fieldName: 'recordType'},
-                   { label: 'Price USD', fieldName: 'price'}
-                    ];
+    columns = [{ label: 'Name', fieldName: 'name' , type :'button' , typeAttributes: {label: { fieldName: 'name' },name: 'select_product',variant: 'base'}},
+        { label: 'Country of Origin', fieldName: 'country' },
+        { label: 'Type', fieldName: 'recordType'},
+        { label: 'Price USD', fieldName: 'price'}
+    ];
     
     selectedRows = [];
     
@@ -118,32 +119,41 @@ export default class ShowProducts extends LightningElement {
     }
     
     handleRowSelection(event) {
-            const visibleNow = event.detail.selectedRows.map(r => r.productId);
-    const visibleIds = this.filteredProducts.map(r => r.productId);
-    const prevVisibleSelected = visibleIds.filter(id => this.globalSelectedIds.has(id));
-    const added = visibleNow.filter(id => !prevVisibleSelected.includes(id));
-    const removed = prevVisibleSelected.filter(id => !visibleNow.includes(id));
-// Update global selection set
-    added.forEach(id => this.globalSelectedIds.add(id));
-    removed.forEach(id => this.globalSelectedIds.delete(id));
-    
+        const visibleNow = event.detail.selectedRows.map(r => r.productId);
+        const visibleIds = this.filteredProducts.map(r => r.productId);
+        const prevVisibleSelected = visibleIds.filter(id => this.globalSelectedIds.has(id));
+        const added = visibleNow.filter(id => !prevVisibleSelected.includes(id));
+        const removed = prevVisibleSelected.filter(id => !visibleNow.includes(id));
+        // Update global selection set
+        added.forEach(id => this.globalSelectedIds.add(id));
+        removed.forEach(id => this.globalSelectedIds.delete(id));
+        
         console.log('handle row selection fired');
         console.log(event.detail.selectedRows);
-    this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id => visibleIds.includes(id));
-
-    // ✅ Keep the full row objects for submit logic
-    this.selectedRows = Array.from(this.globalSelectedIds)
+        this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id => visibleIds.includes(id));
+        
+        // ✅ Keep the full row objects for submit logic
+        this.selectedRows = Array.from(this.globalSelectedIds)
         .map(id => this.products.find(p => p.productId === id))
         .filter(Boolean);
         // this.selectedRows = event.detail.selectedRows;
     }
-
-      selectAllVisible() {
-    this.filteredProducts.forEach(p => this.globalSelectedIds.add(p.productId));
-    this.selectedRowIds = this.filteredProducts.map(r => r.productId);
-  }
+    
+    selectAllVisible() {
+        this.filteredProducts.forEach(p => this.globalSelectedIds.add(p.productId));
+        this.selectedRowIds = this.filteredProducts.map(r => r.productId);
+    }
     
     handleSubmit() {
+        if (this.selectedRows.length === 0 || this.opportunityName.trim() === '') {
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Please enter an Opportunity name and select at least one product',
+                    variant: 'error'
+                })
+            );
+            return;
+        }
         // Example: process selected products
         const selectedIds = this.selectedRows.map(row => row.Id);
         console.log('Submitting products:', selectedIds[0]);
@@ -167,32 +177,40 @@ export default class ShowProducts extends LightningElement {
         
         
         //apex logic  getProductDetails(List<Id> productIds) productIdsToOpp List<Id> productIds, Id accountId, String opportunityName)
-        createOpportunity({ productIds: this.productIdsToOpp , accountId: this.recordId, opportunityName: this.opportunityName})
-        .then(() => {
-            console.log('Apex method executed successfully');
-            this.productIdsToOpp = [];
-            
-            // Optional: show toastss
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Submitted',
-                    message: `${this.selectedRows.length} product(s) submitted.`,
-                    variant: 'success'
-                })
-            );
+        createOpportunity({ 
+    productIds: this.productIdsToOpp, 
+    accountId: this.recordId, 
+    opportunityName: this.opportunityName 
+})
+.then(opportunityId => {  // <-- capture returned opportunityId here
+    console.log('Apex method executed successfully, Id:', opportunityId);
+    this.productIdsToOpp = [];
+
+    this.dispatchEvent(
+        new ShowToastEvent({
+            title: 'Submitted',
+            message: `${this.selectedRows.length} product(s) submitted.`,
+            variant: 'success'
         })
-        .catch(error => {
-            console.error('Error calling Apex method:', error);
-            this.productIdsToOpp = [];
-        });
+    );
+
+    this[NavigationMixin.Navigate]({  // <-- fix typo here: "this" not "his"
+        type: 'standard__recordPage',
+        attributes: {
+            recordId: opportunityId,
+            objectApiName: 'Opportunity',
+            actionName: 'view'
+        }
+    });
+})
+.catch(error => {
+    console.error('Error calling Apex method:', error);
+    this.productIdsToOpp = [];
+});
+
         
     }
-
-    get isSubmitDisabled() {
-        return this.selectedRows.length === 0 || this.opportunityName.trim() === '';
-    }
-
-       
+    
     productIdsToOpp = [];
     selectedProductId;
 }

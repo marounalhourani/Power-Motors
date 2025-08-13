@@ -1,9 +1,11 @@
 <template>
     <lightning-card title="Available Products" icon-name="standard:product">
         
-        <!-- Filter Controls -->
-        <div class="slds-p-horizontal_medium slds-m-bottom_medium">
-            <lightning-combobox
+<!-- Filter Controls -->
+<div class="slds-grid slds-gutters slds-p-horizontal_medium slds-m-bottom_medium">
+
+    <div class="slds-col">
+        <lightning-combobox
             name="country"
             label="Country"
             value={selectedCountry}
@@ -11,22 +13,29 @@
             options={countryOptions}
             onchange={handleChange}>
         </lightning-combobox>
-        
+    </div>
+
+    <div class="slds-col">
         <lightning-combobox
-        name="type"
-        label="Type"
-        value={selectedType}
-        placeholder="Filter by type"
-        options={recortTypeOptions}
-        onchange={handleChange}>
-    </lightning-combobox>
-    
-    <lightning-input
-    label="Opportunity Name"
-    value={opportunityName}
-    onchange={handleNameChange}>
-</lightning-input>
+            name="type"
+            label="Type"
+            value={selectedType}
+            placeholder="Filter by type"
+            options={recortTypeOptions}
+            onchange={handleChange}>
+        </lightning-combobox>
+    </div>
+
+    <div class="slds-col">
+        <lightning-input
+            label="Opportunity Name"
+            value={opportunityName}
+            onchange={handleNameChange}>
+        </lightning-input>
+    </div>
+
 </div>
+
 
 <!-- Product Table -->
 <template if:true={products}>
@@ -47,15 +56,16 @@
         {error.body.message}
     </p>
 </template>
-
+<!-- disabled={isSubmitDisabled} -->
 <div class="slds-m-top_medium slds-align_absolute-center">
     <lightning-button
     label="Submit"
     variant="brand"
     onclick={handleSubmit}
-    disabled={isSubmitDisabled}>
+    
+    >
+
 </lightning-button>
-<lightning-helptext content="To Submit, you need to at Least Select 1 Product, and Add an Opportunity Name"></lightning-helptext>
 
 </div>
 

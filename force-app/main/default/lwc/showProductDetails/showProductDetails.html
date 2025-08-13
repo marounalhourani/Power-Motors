@@ -1,47 +1,77 @@
 <template>
   <template if:true={product}>
-    <article class="product-card" role="region" aria-labelledby="product-title">
-      <header class="product-header">
-        <h2 id="product-title" class="product-name">{product.name}</h2>
+    <article class="slds-card" role="region" aria-labelledby="product-title" style="max-width: 700px; margin: auto;">
+      <header class="slds-card__header slds-grid">
+        <div class="slds-media slds-media_center slds-has-flexi-truncate">
+          <div class="slds-media__body">
+            <h2 id="product-title" class="slds-text-heading_medium slds-truncate" title={product.name}>
+              {product.name}
+            </h2>
+            <p class="slds-text-body_small" title={product.productId}>
+              <strong>Product ID:</strong> {product.productId}
+            </p>
+          </div>
+        </div>
       </header>
-
-      <section class="product-details" aria-label="Product details">
-        <dl>
-          <div class="detail-item">
-            <dt>Country of Origin:</dt>
-            <dd>{product.country}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Price:</dt>
-            <dd>${product.price}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Record Type:</dt>
-            <dd>{product.recordType}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <figure class="product-image">
-        <template if:true={product.fullUrl}>
-          <img
-            src={product.fullUrl}
-            alt={product.name}
-            class="responsive-image"
-            loading="lazy"
-            decoding="async"
-          />
-        </template>
-        <template if:false={product.fullUrl}>
-          <figcaption class="no-image"><em>No image available888.</em></figcaption>
-        </template>
-      </figure>
+      
+      <div class="slds-card__body slds-card__body_inner slds-grid slds-wrap">
+        <!-- Left column: product details -->
+        <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+          <dl>
+            <div class="slds-p-bottom_small">
+              <dt class="slds-text-title_caps">Type</dt>
+              <dd class="slds-text-body_regular">{product.recordType}</dd>
+            </div>
+            <div class="slds-p-bottom_small">
+              <dt class="slds-text-title_caps">Country</dt>
+              <dd class="slds-text-body_regular">{product.country}</dd>
+            </div>
+            <div class="slds-p-bottom_small">
+              <dt class="slds-text-title_caps">Price</dt>
+              <dd class="slds-text-body_regular">${product.price}</dd>
+            </div>
+            <div class="slds-p-bottom_small">
+              <dt class="slds-text-title_caps">Description</dt>
+              <dd class="slds-text-body_regular" style="white-space: normal;">{product.description}</dd>
+            </div>
+            <div class="slds-p-bottom_small">
+              <dt class="slds-text-title_caps">Serial Number</dt>
+              <dd class="slds-text-body_regular">{product.serialNumber}</dd>
+            </div>
+          </dl>
+        </div>
+        
+        <!-- Right column: product image -->
+        <div class="slds-col slds-size_1-of-2 slds-text-align_center">
+          <template if:true={product.fullUrl}>
+            <template if:true={isLoading}>
+              <lightning-spinner alternative-text="Loading image" size="small"></lightning-spinner>
+            </template>
+            
+            <img
+              src={product.fullUrl}
+              alt={product.name}
+              class="slds-image slds-image_responsive"
+              onload={handleImageLoad}
+              loading="lazy"
+              decoding="async"
+            />
+            
+          </template>
+          <template if:false={product.fullUrl}>
+            <p class="slds-text-body_small slds-text-color_weak slds-align_absolute-center" style="margin-top: 2rem;">
+              No image available.
+            </p>
+          </template>
+        </div>
+      </div>
     </article>
   </template>
-
+  
   <template if:true={error}>
-    <aside class="error-message" role="alert" aria-live="assertive">
-      <p>Error loading product: {error.message}</p>
+    <aside class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+      <span class="slds-assistive-text">Error</span>
+      <h2>{error.message}</h2>
     </aside>
   </template>
 </template>
