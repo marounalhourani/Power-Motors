@@ -160,6 +160,10 @@ public with sharing class ShowProductsController {
             }
             if (!oppLineItems.isEmpty()) {
                 insert oppLineItems;
+                opp.StageName = 'Closed Won';
+                update opp;
+                System.Debug('opp update tp closed won');
+
                 
             }
             

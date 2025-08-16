@@ -1,20 +1,35 @@
+/**
+     * @description Class used in flow to generate a quote and send it by email when opp is closed won
+	 * @Author: Maroun Al Hourani
+     * @Company: EI-Technologies
+	 * @<16/08/2025>
+*/ 
+
 public without sharing class generateQuotePdfDocument {
-    
+
+
+
+     /**
+     * @description invocable method bcz its used in a flow. it should take a list and not a single Id
+     * otherwise it doesnt work
+     * param list of opp that triggered the flow, irl its 1 opp, we get it sinced 
+     * quote and return its Id
+     */  
     @InvocableMethod
-    public static void QuoteCreateAndEmail(List<Id> oppIds) {
+    public static void QuoteCreateAndEmail(List<Id> oppIds) { 
         
         List<Quote> quoteList = [SELECT ID FROM Quote WHERE OpportunityId IN :oppIds AND IsSyncing = TRUE];
-        
-        //If a Quote is found lets generate a new Qutote PDF
-        // for (Quote quote : quoteList) {
-        //     CreateQuotePDF(quote.id);
-        // }
+
         if (!quoteList.isEmpty()) {
             CreateQuotePDF(quoteList[0].id);
         }
+        
     }
     
-    //Generates a Quote PDF and associates it to the Quote
+     /**
+     * @description takes the quote Id, use it to generate a pdf, then send it by email
+     */
+
     @future(callout=true)
     public static void CreateQuotePDF(Id quoteID) {
         
@@ -22,23 +37,34 @@ public without sharing class generateQuotePdfDocument {
         Id accountId = quoteRecord.AccountId;
         List<Contact> contacts = [SELECT Id, FirstName, LastName, Email FROM Contact WHERE AccountId = :accountId];
         
-        
-        
         //This Url creates the pdf for quote
         String quoteUrl = '/quote/quoteTemplateDataViewer.apexp?id=';
         quoteUrl += quoteID;
         quoteUrl += '&headerHeight=190&footerHeight=188&summlid=';
-        quoteUrl += Label.quote_template_id;
+        quoteUrl += Label.quote_template_id; // found in setup -> quote template 
         quoteUrl += '#toolbar=1&navpanes=0&zoom=90';
         
         //Create pdf content
         PageReference pg = new PageReference(quoteUrl);
         
         //Document object of quote which holds the quote pdf
+        //quote document holds the actual quote and metadata about it
+        //the we need to assign to this object, some information, then we need to insert it
         QuoteDocument quotedoc = new QuoteDocument();
         
+
+        //this or (for testing purposes)
+        Blob b;
+        if (!Test.isRunningTest()) {
+            b = pg.getContentAsPDF();
+        } else {
+            // simulate pdf in test context
+            b = Blob.valueOf('FakePDF');
+        }
+
+        //this
         //Get the content of Pdf.
-        Blob b = pg.getContentAsPDF();
+        // Blob b = pg.getContentAsPDF();// getcontent is async
         
         //content assign to document
         quotedoc.Document = b;

@@ -28,8 +28,7 @@ export default class ShowProducts extends NavigationMixin(LightningElement) {
             this.filteredProducts = [...this.products];
         }
         else if(error){
-            this.error = error;
-            
+            this.error = error;    
         }
     }
     
@@ -119,6 +118,7 @@ export default class ShowProducts extends NavigationMixin(LightningElement) {
     }
     
     handleRowSelection(event) {
+        console.log('selected row ids: ' , this.selectedRowIds);
         const visibleNow = event.detail.selectedRows.map(r => r.productId);
         const visibleIds = this.filteredProducts.map(r => r.productId);
         const prevVisibleSelected = visibleIds.filter(id => this.globalSelectedIds.has(id));

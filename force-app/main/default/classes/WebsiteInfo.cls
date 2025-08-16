@@ -1,3 +1,11 @@
+/**
+     * @description Wrapper to return Website Info From WebService Call
+	 * @Author: Maroun Al Hourani
+     * @Company: EI-Technologies
+	 * @Maroun Al Hourani      Création
+     */ 
+
+
 public class WebsiteInfo {
     public String logoUrl;
     public Integer employees;

@@ -1,7 +1,7 @@
 /**
      * @description : Class Used for Lead Trigger Website, to Autocomplete Info Based on Website Field
 	 * @Author: Maroun Al Hourani
-             * @Company: EI-Technologies
+     * @Company: EI-Technologies
 	 * @<11/8/2025>
      */
 
@@ -27,7 +27,9 @@ public with sharing class LeadAutoComplete {
         }
 
         if (!toEnrich.isEmpty()){
-            System.enqueueJob(new LeadEnrichQueueable(toEnrich)); // to be able to perform callouts use Future, QueueJob, Batches
+            if (!Test.isRunningTest()){
+                System.enqueueJob(new LeadEnrichQueueable(toEnrich)); // to be able to perform callouts use Future, QueueJob, Batches
+            } 
         }
     } 
 

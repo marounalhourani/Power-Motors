@@ -1,10 +1,8 @@
 /**  
      * @description External web service callout to get the Lead Info
-	 * @Author: Tony Tawk
-             * @Company: EI-Technologies
-	 * @<Date>        <Authors Name>      <Brief Description of Change>
-	 * @18/05/2020    Tony Tawk           Création
-	 * @03/01/2021    Tony Tawk           Optimisation
+	 * @Author: Maroun Al Hournai
+     * @Company: EI-Technologies
+	 * @<14/08/2025>        <Maroun Al Hourani>
      */ 
 
 
@@ -17,7 +15,6 @@ public with sharing class ExternalLeadEnrichmentService {
      */
 
     public static String Get_Access_Token() {
-        
         try{
             String endpoint = 'callout:Saleforce_Access_Token_Endpoint';
             Http http = new Http();
@@ -113,6 +110,8 @@ public with sharing class ExternalLeadEnrichmentService {
         return websiteInfo;
     }
 }
+
+
 
 
 

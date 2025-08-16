@@ -1,7 +1,7 @@
 /**
      * @description Queue Job to be Able to Call asynchronous callout
 	 * @Author: maroun al hourani
-             * @Company: EI-Technologies
+     * @Company: EI-Technologies
 	 * @<11/8/2025>        <Maroun Al Hourani>
 */ 
 
@@ -13,8 +13,12 @@ public with sharing class LeadEnrichQueueable implements Queueable, Database.All
         this.leadIds = leadIds;
     }
 
+     /**
+     * @description execute perform the enrichment
+     * Here we got all the Lead Id that got triggered and met our criteria ( insert / update with website field changed)
+     */
+
     public void execute(QueueableContext ctx) {
-        // adjust the Lead field API names to match your org
         List<Lead> leads = [
             SELECT Id, Website,
                    logoUrl__c, NumberOfEmployees, Foundation_date__c,
@@ -27,18 +31,18 @@ public with sharing class LeadEnrichQueueable implements Queueable, Database.All
         Map<String, WebsiteInfo> websiteCache = new Map<String, WebsiteInfo>();
 
         for (Lead l : leads) {
-            String website = l.Website;
-            // if (String.isBlank(website)) continue;
+            String website = l.Website; 
+
             if (!websiteCache.containsKey(website)) {
+                //WebsiteInfo is a wrapper
                 WebsiteInfo info = ExternalLeadEnrichmentService.Get_Website_info(website);
                 websiteCache.put(website, info);
-            
             }
-            WebsiteInfo info = websiteCache.get(website);
-            System.debug('iinfo: ' + info);
-            if (info != null) {
 
-                // apply enrichment (overwrite or guard if you want)
+            WebsiteInfo info = websiteCache.get(website);
+            System.debug('info: ' + info);
+            if (info != null) {
+                // apply enrichment 
                 l.logoUrl__c = info.logoUrl;
                 l.NumberOfEmployees = info.employees;
                 l.Foundation_date__c = info.foundationDate != null ? Date.valueOf(info.foundationDate) : null;

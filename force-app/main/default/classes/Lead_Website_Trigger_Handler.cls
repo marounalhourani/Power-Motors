@@ -32,10 +32,7 @@ public with sharing class Lead_Website_Trigger_Handler  extends TriggerHandler i
     }
     
     public override void afterInsert() { 
-        
-
         LeadAutoComplete.getLeadIdsToCallout(null, TriggerNew);
-
     }
     
     public  override void beforeUpdate() { 
