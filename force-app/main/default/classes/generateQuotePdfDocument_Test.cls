@@ -50,7 +50,6 @@ static void makeData() {
 
 }
 
-
     @isTest
     public static void QuoteCreateAndEmail_Test() {
         List<Opportunity> opps = [SELECT Id From Opportunity Where Name = 'Test Opp551100'];
@@ -62,7 +61,6 @@ static void makeData() {
         Test.startTest();
          generateQuotePdfDocument.QuoteCreateAndEmail(oppIds);
         Test.stopTest();
-
 
     }
 }

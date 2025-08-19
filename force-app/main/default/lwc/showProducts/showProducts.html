@@ -1,53 +1,58 @@
 <template>
     <lightning-card title="Available Products" icon-name="standard:product">
         
-<!-- Filter Controls -->
-<div class="slds-grid slds-gutters slds-p-horizontal_medium slds-m-bottom_medium">
-
-    <div class="slds-col">
-        <lightning-combobox
-            name="country"
-            label="Country"
-            value={selectedCountry}
-            placeholder="Filter by country"
-            options={countryOptions}
-            onchange={handleChange}>
-        </lightning-combobox>
-    </div>
-
-    <div class="slds-col">
-        <lightning-combobox
+        <!-- Filter Controls -->
+        <div class="slds-grid slds-gutters slds-p-horizontal_medium slds-m-bottom_medium">
+            
+            <div class="slds-col">
+                <lightning-combobox
+                name="country"
+                label="Country"
+                value={selectedCountry}
+                options={countryOptions}
+                onchange={handleChange}>
+            </lightning-combobox>
+        </div>
+        
+        <div class="slds-col">
+            <lightning-combobox
             name="type"
             label="Type"
             value={selectedType}
-            placeholder="Filter by type"
             options={recortTypeOptions}
             onchange={handleChange}>
         </lightning-combobox>
     </div>
-
+    
     <div class="slds-col">
         <lightning-input
-            label="Opportunity Name"
-            value={opportunityName}
-            onchange={handleNameChange}>
-        </lightning-input>
-    </div>
-
+        label="Opportunity Name"
+        value={opportunityName}
+        onchange={handleNameChange}>
+    </lightning-input>
 </div>
 
 
+</div>
 <!-- Product Table -->
 <template if:true={products}>
-    <lightning-datatable
-    key-field="productId"
-    onrowaction={handleRowAction}
-    data={filteredProducts}
-    onrowselection={handleRowSelection}
-    columns={columns}
-    selected-rows={selectedRowIds}>
-    
-</lightning-datatable>
+    <template if:true={products.length}>
+        <lightning-datatable
+            key-field="productId"
+            onrowaction={handleRowAction}
+            data={products}
+            onrowselection={handleRowSelection}
+            columns={columns}
+            selected-rows={selectedRowIds}>
+
+        </lightning-datatable>
+    </template>
+    <template if:false={products.length}>
+        <p class="slds-text-color_weak slds-p-horizontal_medium">
+            No products found.
+        </p>
+    </template>
+  
 </template>
 
 <!-- Error Handling -->
@@ -56,17 +61,13 @@
         {error.body.message}
     </p>
 </template>
-<!-- disabled={isSubmitDisabled} -->
+
 <div class="slds-m-top_medium slds-align_absolute-center">
     <lightning-button
     label="Submit"
     variant="brand"
-    onclick={handleSubmit}
-    
-    >
-
+    onclick={handleSubmit}>
 </lightning-button>
-
 </div>
 
 </lightning-card>

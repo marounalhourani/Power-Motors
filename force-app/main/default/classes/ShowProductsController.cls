@@ -1,13 +1,20 @@
 public with sharing class ShowProductsController {
     
     @AuraEnabled(cacheable=true)
-    public static List<ProductWrapper> getAvailabledProducts() {
+    public static List<ProductWrapper> getAvailabledProducts(String coutryOfOrigin, String recordTypeName ) {
         
         Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name = 'Person Account Price Book' LIMIT 1];
         
-        List<Product2> products = [SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, Description,Serial_Number__c, IsActive From Product2 
-        WHERE IsActive = True];
-        
+        List<Product2> products;
+        String query = 'SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, Description,Serial_Number__c, IsActive From Product2 WHERE IsActive = True' ;
+        if ( coutryOfOrigin <> 'All') {
+            query = query + ' AND Country_Of_Origin__c = :coutryOfOrigin';
+        }
+        if ( recordTypeName <> 'All'){
+            query = query + ' AND recordTypeName__c = :recordTypeName';
+        }
+        products = Database.query(query);
+       
         //get pricebook entries for b2c pricebook
         Map<Id, PricebookEntry> productIdToEntry = new Map<Id, PricebookEntry>();
         for(PriceBookEntry pbe : [SELECT Product2Id, UnitPrice FROM PriceBookEntry WHERE Product2Id in :products AND Pricebook2Id = :B2Cpb.Id AND IsActive = True]){

@@ -27,9 +27,9 @@ public with sharing class LeadAutoComplete {
         }
 
         if (!toEnrich.isEmpty()){
-            if (!Test.isRunningTest()){
+            // if (!Test.isRunningTest()){
                 System.enqueueJob(new LeadEnrichQueueable(toEnrich)); // to be able to perform callouts use Future, QueueJob, Batches
-            } 
+            // } 
         }
     } 
 

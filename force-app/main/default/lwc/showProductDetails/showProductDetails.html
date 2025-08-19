@@ -51,10 +51,15 @@
               alt={product.name}
               class="slds-image slds-image_responsive"
               onload={handleImageLoad}
-              loading="lazy"
+              loading="lazy" 
               decoding="async"
             />
             
+<!--lazy:  Browser won’t load the image until it’s actually visible in the viewport. Saves 
+decoding="async" → Lets the browser decode the image without blocking rendering, so the rest of the page stays responsive.
+
+onload={handleImageLoad} → Event handler that fires only when the image has fully loaded, so you can stop the spinner.
+-->
           </template>
           <template if:false={product.fullUrl}>
             <p class="slds-text-body_small slds-text-color_weak slds-align_absolute-center" style="margin-top: 2rem;">
