@@ -16,7 +16,7 @@ public with sharing class ShowProductsController_Test {
     public static void getAvailabledProducts_Test() {
         
         Test.startTest();
-            List<ShowProductsController.ProductWrapper> products = ShowProductsController.getAvailabledProducts();
+            List<ShowProductsController.ProductWrapper> products = ShowProductsController.getAvailabledProducts('All', 'All');
         Test.stopTest();
             Assert.areEqual(3, products.size(), 'not actual size');
         
