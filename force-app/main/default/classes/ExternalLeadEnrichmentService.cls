@@ -56,7 +56,7 @@ public with sharing class ExternalLeadEnrichmentService {
      */
     private static String getAccountQueryEndpoint(String website) {
         String x = (website != null && website != '') ? String.escapeSingleQuotes(website) : '';
-        String baseUrl = 'https://neo-discom2-dev-ed.my.salesforce.com/services/data/v54.0/query/?q=';
+        String baseUrl = label.BaseAPI_URL;
         String soql = 'SELECT logoUrl__c, NumberOfEmployees, Foundation_date__c, BillingAddress, ShippingAddress, Description FROM Account WHERE Website = \'' +  x + '\'';
         String encodedQuery = EncodingUtil.urlEncode(soql, 'UTF-8');
         String fullEndpoint = baseUrl + encodedQuery;

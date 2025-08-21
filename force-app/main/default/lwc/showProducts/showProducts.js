@@ -118,12 +118,13 @@ export default class ShowProducts extends NavigationMixin(LightningElement) {
             } else if (name === 'type') {
                 this.selectedType = value;
             }
-            
+
+            const visibleIds = this.products.map(r => r.productId);
+
             // Recompute the visible selected IDs from the global Set
-            setTimeout(() => {
-                const visibleIds = this.products.map(r => r.productId);
-                console.log('visible Ids 111', JSON.stringify(visibleIds));
-            }, 5000); // 5000 ms = 5 seconds
+            // setTimeout(() => {
+            //     console.log('visible Ids 111', JSON.stringify(visibleIds));
+            // }, 5000); // 5000 ms = 5 seconds
             
             this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id => visibleIds.includes(id));
             console.log('selected Ids row Ids' , JSON.stringify(this.selectedRowIds));

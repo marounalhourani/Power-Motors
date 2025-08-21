@@ -61,11 +61,18 @@ decoding="async" → Lets the browser decode the image without blocking renderin
 onload={handleImageLoad} → Event handler that fires only when the image has fully loaded, so you can stop the spinner.
 -->
           </template>
-          <template if:false={product.fullUrl}>
-            <p class="slds-text-body_small slds-text-color_weak slds-align_absolute-center" style="margin-top: 2rem;">
-              No image available.
-            </p>
-          </template>
+          
+<template if:false={product.fullUrl}>
+    <div class="slds-text-body_small slds-text-color_weak slds-text-align_center" style="margin-top: 1rem; line-height: 1.4;">
+        <p><strong>No image available</strong></p>
+        <p style="margin: 0.5rem 0 0;">
+            To display an image, open the product’s <em>Related</em> tab and upload a file starting with <strong>MAIN-</strong>. 
+            The first file with <strong>MAIN-</strong> will show here automatically.
+        </p>
+    </div>
+</template>
+
+
         </div>
       </div>
     </article>

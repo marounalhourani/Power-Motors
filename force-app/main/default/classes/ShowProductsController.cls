@@ -1,9 +1,24 @@
+/**
+* @description ShowProductsController used in lwc
+* @Author: Maroun Al Hourani
+* @Company: EI-Technologies
+* @<14/08/2025>        Maroun Al Hourani 
+
+*/
+
+
+
+
 public with sharing class ShowProductsController {
-    
+
+     /**
+     * @description show products in main tab , use filtering from backend, used dynamic query
+     * param  
+     **/
     @AuraEnabled(cacheable=true)
     public static List<ProductWrapper> getAvailabledProducts(String coutryOfOrigin, String recordTypeName ) {
         
-        Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name = 'Person Account Price Book' LIMIT 1];
+        Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name =:Label.personAccountPriceBookName LIMIT 1];
         
         List<Product2> products;
         String query = 'SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, Description,Serial_Number__c, IsActive From Product2 WHERE IsActive = True' ;
@@ -44,6 +59,9 @@ public with sharing class ShowProductsController {
         @AuraEnabled public Decimal price;
         @AuraEnabled public String fullUrl;
         @AuraEnabled public String description;
+        @AuraEnabled public String pictureId;
+
+
         
         
         
@@ -59,17 +77,17 @@ public with sharing class ShowProductsController {
             this.serialNumber = serialNumber;
         }
 
-        // 8 arguments constructor       
-        public ProductWrapper(Id productId, String name, String country, String recordType, Decimal price, String description, String serialNumber, String fullUrl) {
+        // 9 arguments constructor       
+        public ProductWrapper(Id productId, String name, String country, String recordType, Decimal price, String description, String serialNumber, String fullUrl, String pictureId) {
             this.productId = productId;
             this.name = name;
             this.country = country;
             this.recordType = recordType;
             this.price = price;
-            this.fullUrl = null;
             this.description = description;
             this.serialNumber = serialNumber;
             this.fullUrl = fullUrl;
+            this.pictureId = pictureId;
         }
         
         
@@ -88,17 +106,25 @@ public with sharing class ShowProductsController {
         
     }
     
+
+
+     /**
+     * @description once we click on a product, we use pub sub to send product id from 1 comp to another, a
+     * then we display info of product 
+     * param  productId
+     **/
     @AuraEnabled(cacheable=true)
     public static ProductWrapper getProductDetails(Id productId) {
         Id picId;
         ContentVersion cv;
         String ordDomain = Label.org_domain;
         String fullUrl;
+        ContentDocumentLink PictureId;
         Product2 p = [SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, IsActive, Description, Serial_Number__c From Product2 WHERE Id = :productId LIMIT 1];
         Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name = 'Person Account Price Book' LIMIT 1];
         PriceBookEntry pbe =  [SELECT Product2Id, UnitPrice FROM PriceBookEntry WHERE Product2Id = :p.Id AND Pricebook2Id = :B2Cpb.Id AND IsActive = True LIMIT 1];
         try {    
-            ContentDocumentLink PictureId = [SELECT ContentDocumentId, ContentDocument.Title FROM ContentDocumentLink WHERE LinkedEntityId =: productId AND ContentDocument.Title LIKE 'MAIN%' LIMIT 1];
+          PictureId = [SELECT ContentDocumentId, ContentDocument.Title FROM ContentDocumentLink WHERE LinkedEntityId =: productId AND ContentDocument.Title LIKE 'MAIN%' LIMIT 1];
             picId =PictureId.ContentDocumentId;
             cv = [SELECT Id FROM ContentVersion WHERE ContentDocumentId = :picId ORDER BY CreatedDate DESC LIMIT 1];
             fullUrl = Label.org_domain + '/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=' + cv.Id + '&operation=View';
@@ -106,24 +132,33 @@ public with sharing class ShowProductsController {
             
             fullUrl = null;
         }
-           
-  
-        ProductWrapper wrapper = new ProductWrapper(p.id, p.name, p.Country_Of_Origin__c, p.recordTypeName__c, pbe.UnitPrice,  p.Description,p.Serial_Number__c, fullUrl );
+
+        String mainPicId = (PictureId != null) ? String.valueOf(PictureId.ContentDocumentId) : '';
+        System.Debug('picture Id is here: ' + mainPicId );
+        ProductWrapper wrapper = new ProductWrapper(p.id, p.name, p.Country_Of_Origin__c, p.recordTypeName__c, pbe.UnitPrice,  p.Description,p.Serial_Number__c, fullUrl, mainPicId );
         System.debug('product Id: '+ wrapper.productId);
         System.debug('product name: '+ wrapper.name);
         System.debug('product country: '+ wrapper.country);
         System.debug('product recordType: '+ wrapper.recordType);
         System.debug('product price: '+ wrapper.price);
         System.debug('product Picture URL: '+ wrapper.fullUrl);
+        System.debug('product Picture Id: '+ wrapper.pictureId);
+
+
         
         
         return wrapper;
         
     }
     
+
+     /**
+     * @description once we click submit,we create an opportunity
+     * param  
+     **/
     @AuraEnabled
     public static Id createOpportunity(List<Id> productIds, Id accountId, String opportunityName){
-        Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name = 'Person Account Price Book' LIMIT 1];
+        Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name =: Label.personAccountPriceBookName LIMIT 1];
         Id oppId;
         if (productIds.size() > 0) {
             Opportunity opp = new Opportunity(
