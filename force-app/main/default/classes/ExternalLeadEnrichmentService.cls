@@ -32,13 +32,19 @@ public with sharing class ExternalLeadEnrichmentService {
             
             request.setBody(body);
             
-            HttpResponse response = http.send(request);
+            HttpResponse response = http.send(request); // of type HttpResponse      
+            String responseBody = response.getBody();
+
             System.debug('Status: ' + response.getStatus());
             System.debug('Response: ' + response.getBody());
-            
-            String responseBody = response.getBody();
+
+            //deserialize to transfrom the response body in a way we can use it and get info from it
+            //why we do casting? desrializeUntyped always return an object, so we cast in order to be able to get info
             Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(responseBody);
+
+            //we use (String) bcz we are converting from Object to String
             String token = (String) result.get('access_token');
+
             System.debug('Actual token: ' + token); // Will still say "SESSION_ID_REMOVED" in Developer Console, but you can use it now
             
             return token;
@@ -70,8 +76,8 @@ public with sharing class ExternalLeadEnrichmentService {
      */
     public static WebsiteInfo Get_Website_info(String website){
 
-        LeadWrapper info = new LeadWrapper();//Big Generated Wrapper
-        WebsiteInfo websiteInfo = new WebsiteInfo();//Only What we Need
+        LeadWrapper info = new LeadWrapper();//Big Generated Wrapper from JSON to apex website
+        WebsiteInfo websiteInfo = new WebsiteInfo();//Only What we Need, we created it
     
         
         //Get Callout
@@ -83,7 +89,8 @@ public with sharing class ExternalLeadEnrichmentService {
         request.setHeader('Authorization', 'Bearer ' + Get_Access_Token());
         HttpResponse response = http.send(request);
         String responseBody = response.getBody();
-        responseBody = responseBody.replaceAll('__c', '');
+        responseBody = responseBody.replaceAll('__c', ''); 
+        //why? in wrapper class we cannot create properties that end with __c so then how could we access record.x__c?
         
         if(response.getStatusCode()==200){
             LeadWrapper responseBodyWrapper = LeadWrapper.parse(responseBody);

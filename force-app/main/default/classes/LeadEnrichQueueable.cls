@@ -19,6 +19,7 @@ public with sharing class LeadEnrichQueueable implements Queueable, Database.All
      */
 
     public void execute(QueueableContext ctx) {
+        //select the leads that we want to autocomplete info based on website
         List<Lead> leads = [
             SELECT Id, Website,
                    logoUrl__c, NumberOfEmployees, Foundation_date__c,
@@ -28,6 +29,7 @@ public with sharing class LeadEnrichQueueable implements Queueable, Database.All
         ];
 
         // cache per website to avoid redundant callouts
+        //website info is a wrapper class that has all the info we need
         Map<String, WebsiteInfo> websiteCache = new Map<String, WebsiteInfo>();
 
         for (Lead l : leads) {
@@ -35,6 +37,7 @@ public with sharing class LeadEnrichQueueable implements Queueable, Database.All
 
             if (!websiteCache.containsKey(website)) {
                 //WebsiteInfo is a wrapper
+                //external lead enrich service is where the callout to external system happens
                 WebsiteInfo info = ExternalLeadEnrichmentService.Get_Website_info(website);
                 websiteCache.put(website, info);
             }
@@ -45,6 +48,7 @@ public with sharing class LeadEnrichQueueable implements Queueable, Database.All
                 // apply enrichment 
                 l.logoUrl__c = info.logoUrl;
                 l.NumberOfEmployees = info.employees;
+    // foundation Date might be null, and we cannot do Date.valueOf(null) this is why we use this technique
                 l.Foundation_date__c = info.foundationDate != null ? Date.valueOf(info.foundationDate) : null;
                 l.Description= info.description;
                 l.Description__c= info.description;

@@ -10,14 +10,90 @@ import createOpportunity from '@salesforce/apex/ShowProductsController.createOpp
 import { NavigationMixin } from 'lightning/navigation';
 
 export default class ShowProducts extends NavigationMixin(LightningElement) {
+    @track isLoading = true;
+    @track totalRecords = 0; // total number of records after filtering
+    @track totalPages = 0; // how many pages will be displayed if we have this number of total records
+    @track currentPage = 1; //current page
+    pageSize = 5; // Records per page
+    
+    @track selectedCountry = 'All'; // default comboBox value
+    @track selectedType = 'All'; // default comboBox value
+    
+    // Fetch paginated data from Apex
+    connectedCallback() {
+        this.loadAccounts();
+
+    }
+    
+    loadAccounts() {
+        getAvailabledProducts({ coutryOfOrigin: this.selectedCountry, recordTypeName: this.selectedType, pageNumber: this.currentPage, pageSize: this.pageSize })
+        .then(result => {
+            this.totalRecords = result.totalRecords;
+            this.totalPages = result.totalPages;
+            console.log(this.totalRecords,result.totalRecords, 'total records' )
+            
+            //put inside if because we dont want to recompute them everytime we can the method
+            if(this.allProducts === undefined) {
+                if (this.selectedCountry == 'All' && this.selectedType == 'All'){
+                    this.allProducts = result.allRecords.map(prod => ({
+                        ...prod,
+                        price: prod.price != null ? `${prod.price}$` : ''
+                    }));
+                }
+            }
+            
+            console.log('all products: ', JSON.stringify(this.allProducts));
+            this.products = result.records.map(prod => ({
+                ...prod,
+                price: prod.price != null ? `${prod.price}$` : ''
+            }));
+            
+            this.isLoading = false;
+            console.log('those prodycts: ', this.products);
+            
+            // ⬇️ After new data is loaded, recompute which rows should be selected
+            const visibleIds = this.products.map(r => r.productId);
+            this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id =>
+                visibleIds.includes(id)
+            );
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+        });
+    }
+    
+    // Navigate to Previous Page
+    previousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.loadAccounts();
+        }
+    }
+    
+    // Navigate to Next Page
+    nextPage() {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.loadAccounts();
+        }
+    }
+    
+    // Disable navigation buttons when needed
+    get disablePrevious() {
+        return this.currentPage === 1;
+    }
+    
+    get disableNext() {
+        return this.currentPage === this.totalPages;
+    }
+    
     
     
     @api recordId; // used to get the Account Id so when create the Opp we create it on the correct Account
-    @track products; // used to get all the products by the correct filters 
+    @track products = []; // used to get all the products by the correct filters and paginated
     error; // error if we didnt get the correct products right and apex give error
     @track selectedRowIds = []; // array passed to datatable (visible selected ids)
-    @track selectedCountry = 'All'; // default comboBox value
-    @track selectedType = 'All'; // default comboBox value
+    
     recortTypeOptions = 
     [{ label: 'All', value: 'All' },
         { label: 'Generator', value: 'Generator' }, 
@@ -40,52 +116,7 @@ export default class ShowProducts extends NavigationMixin(LightningElement) {
         // Keep a Set to remember all selected IDs across filters
         globalSelectedIds = new Set(); // set of all selected rows even if hidden
         
-        // // get all products
         
-        // @wire(getAvailabledProducts, { coutryOfOrigin: 'All', recordTypeName:'All' })
-        // wiredAllProducts({ error, data }){
-        //     if(data){
-        //         this.allProducts = data.map(prod => ({
-        //             ...prod,
-        //             price: prod.price != null ? `${prod.price}$` : ''
-        //         }));
-        //     }
-        //     else if(error){
-        //         this.error = error;    
-        //     }
-        // }
-        
-        
-        
-        
-        
-        
-        
-        
-        @wire(getAvailabledProducts, { coutryOfOrigin: '$selectedCountry', recordTypeName:'$selectedType' })
-        wiredProducts({ error, data }){
-            if(data){
-                if (this.selectedCountry == 'All' && this.selectedType == 'All'){
-                    this.allProducts = data.map(prod => ({
-                            ...prod,
-                            price: prod.price != null ? `${prod.price}$` : ''
-                        }));
-                }
-                this.products = data.map(prod => ({
-                    ...prod,
-                    price: prod.price != null ? `${prod.price}$` : ''
-                }));
-                
-                // ⬇️ After new data is loaded, recompute which rows should be selected
-                const visibleIds = this.products.map(r => r.productId);
-                this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id =>
-                    visibleIds.includes(id)
-                );
-            }
-            else if(error){
-                this.error = error;    
-            }
-        }
         
         
         @wire(getObjectInfo, { objectApiName: PRODUCT_OBJECT })
@@ -111,20 +142,18 @@ export default class ShowProducts extends NavigationMixin(LightningElement) {
         
         
         handleChange(event) {
+            this.isLoading = true;
             const { name, value } = event.target; 
-            
             if (name === 'country') {
                 this.selectedCountry = value;
             } else if (name === 'type') {
                 this.selectedType = value;
             }
-
             const visibleIds = this.products.map(r => r.productId);
-
-            // Recompute the visible selected IDs from the global Set
-            // setTimeout(() => {
-            //     console.log('visible Ids 111', JSON.stringify(visibleIds));
-            // }, 5000); // 5000 ms = 5 seconds
+            
+            this.currentPage = 1;
+            this.loadAccounts();
+            
             
             this.selectedRowIds = Array.from(this.globalSelectedIds).filter(id => visibleIds.includes(id));
             console.log('selected Ids row Ids' , JSON.stringify(this.selectedRowIds));
@@ -196,6 +225,10 @@ export default class ShowProducts extends NavigationMixin(LightningElement) {
         
         
         handleSubmit() {
+            console.log('enter submit:');
+            console.log('this selected row length: ', this.selectedRows.length);
+            console.log('this opp name ', this.opportunityName);
+            
             if (this.selectedRows.length === 0 || this.opportunityName.trim() === '') {
                 this.dispatchEvent(
                     new ShowToastEvent({
@@ -207,6 +240,8 @@ export default class ShowProducts extends NavigationMixin(LightningElement) {
             }
             // Example: process selected products
             const selectedIds = this.selectedRows.map(row => row.Id);
+            
+
             console.log('Submitting products:', selectedIds[0]);
             console.log('selected rows: ', this.selectedRows);
             this.selectedRows.forEach(row => {

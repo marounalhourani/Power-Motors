@@ -14,11 +14,13 @@ public with sharing class LeadAutoComplete {
 
     public static void getLeadIdsToCallout(Map<Id, Lead> oldvalueupdate, List<Lead> newvalueupdate) {
         
+
+
         Set<Id> toEnrich = new Set<Id>();
         for (Lead l: newvalueupdate){      
            // oldvalueupdate?.get(l.Id)
             Lead oldLead = (oldvalueupdate != null) ? oldvalueupdate.get(l.Id) : null;  // in the case of insert, cannot do null.get(l.Id), this is why we use this technnique
-
+            //insert with webite or update with website change
             if((oldLead == null && l.Website != null) || (oldLead != null && (oldLead.Website != l.Website  ))) // insert with website there or update with website change
             {                 
                 toEnrich.add(l.Id);    // add Id of the Lead to the Set of Leads to Enrich          
@@ -27,9 +29,9 @@ public with sharing class LeadAutoComplete {
         }
 
         if (!toEnrich.isEmpty()){
-            // if (!Test.isRunningTest()){
+           
                 System.enqueueJob(new LeadEnrichQueueable(toEnrich)); // to be able to perform callouts use Future, QueueJob, Batches
-            // } 
+        
         }
     } 
 

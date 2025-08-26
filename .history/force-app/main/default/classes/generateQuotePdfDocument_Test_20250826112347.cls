@@ -35,22 +35,20 @@ static void makeData() {
     );
     insert qt;
 
-    qt.Status = 'Approved';
+    qt.Status = 'Sent_to_Client';
     update qt;
 
-    qt.Status = 'Sent_to_Client';
+    qt.Status = 'Approved';
     update qt;
 
     qt.Status = 'Approved_by_Client';
     update qt;
 
-      opp.SyncedQuoteId = qt.Id;
-    update opp;
-
     qt.Status = 'Closed';
     update qt;
 
-  
+    opp.SyncedQuoteId = qt.Id;
+    update opp;
 
 
 }

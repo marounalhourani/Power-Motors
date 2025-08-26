@@ -16,24 +16,57 @@ public with sharing class ShowProductsController {
      * param  
      **/
     @AuraEnabled(cacheable=true)
-    public static List<ProductWrapper> getAvailabledProducts(String coutryOfOrigin, String recordTypeName ) {
-        
+    public static Map<String, Object> getAvailabledProducts(String coutryOfOrigin, String recordTypeName, Integer pageNumber, Integer pageSize) {
+        //we will return this Map, it will contain records after filtering and pagination, all records, total records, total page
+        Map<String, Object> response = new Map<String, Object>();
+
+        //get the correct price book for B2C Account
         Pricebook2 B2Cpb = [SELECT Id FROM Pricebook2 WHERE Name =:Label.personAccountPriceBookName LIMIT 1];
         
-        List<Product2> products;
-        String query = 'SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, Description,Serial_Number__c, IsActive From Product2 WHERE IsActive = True' ;
+        List<Product2> products; // will contain a max of 5 records, paginated, and filtered
+        String query = 'SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, Description,Serial_Number__c, IsActive From Product2' ;
+        String baseWhere = ' WHERE IsActive = True';
+
         if ( coutryOfOrigin <> 'All') {
-            query = query + ' AND Country_Of_Origin__c = :coutryOfOrigin';
+            baseWhere = baseWhere + ' AND Country_Of_Origin__c = :coutryOfOrigin';
         }
         if ( recordTypeName <> 'All'){
-            query = query + ' AND recordTypeName__c = :recordTypeName';
+            baseWhere = baseWhere + ' AND recordTypeName__c = :recordTypeName';
         }
+
+        //added
+        Integer offsetVal = (pageNumber - 1) * pageSize;
+                // Get total record count (for pagination)
+        Integer totalRecords = Database.countQuery('SELECT COUNT() FROM Product2' + baseWhere);
+
+        // Calculate total pages
+        Integer totalPages = (totalRecords + pageSize - 1) / pageSize;
+
+
+        query = query + baseWhere + ' ORDER BY Name LIMIT :pageSize OFFSET :offsetVal';
         products = Database.query(query);
+        List<Product2> allProducts = [SELECT Id, Name, Country_Of_Origin__c, recordTypeName__c, Description,Serial_Number__c, IsActive From Product2 WHERE IsActive = True];
+
+
+
+
        
         //get pricebook entries for b2c pricebook
         Map<Id, PricebookEntry> productIdToEntry = new Map<Id, PricebookEntry>();
         for(PriceBookEntry pbe : [SELECT Product2Id, UnitPrice FROM PriceBookEntry WHERE Product2Id in :products AND Pricebook2Id = :B2Cpb.Id AND IsActive = True]){
             productIdToEntry.put(pbe.Product2Id, pbe);
+        }
+
+        Map<Id, PricebookEntry> productIdToEntryForAllProducts = new Map<Id, PricebookEntry>();
+        for(PriceBookEntry pbe : [SELECT Product2Id, UnitPrice FROM PriceBookEntry WHERE Product2Id in :allProducts AND Pricebook2Id = :B2Cpb.Id AND IsActive = True]){
+            productIdToEntry.put(pbe.Product2Id, pbe);
+        }
+
+         //build wrapper list
+        List<ProductWrapper> resultAllProducts = new List<ProductWrapper>();
+        for(Product2 p: allProducts){
+            Decimal price = productIdToEntryForAllProducts.containsKey(p.Id) ? productIdToEntryForAllProducts.get(p.Id).UnitPrice : null;
+            resultAllProducts.add(new ProductWrapper(p.Id, p.Name, p.Country_Of_Origin__c, p.recordTypeName__c, price, p.Description, p.Serial_Number__c));
         }
         
         //build wrapper list
@@ -43,7 +76,15 @@ public with sharing class ShowProductsController {
             result.add(new ProductWrapper(p.Id, p.Name, p.Country_Of_Origin__c, p.recordTypeName__c, price, p.Description, p.Serial_Number__c));
         }
         
-        return result;
+
+        // Add data to response map
+        response.put('records', result);
+        response.put('totalRecords', totalRecords);
+        response.put('totalPages', totalPages);
+        response.put('allRecords', resultAllProducts);
+
+
+        return response;
         
     }
     
